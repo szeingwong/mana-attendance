@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mana Pharmacy Attendance</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;color:#1a202c}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+#loginScreen{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);justify-content:center;align-items:center;padding:20px}
+.login-card{background:#fff;border-radius:20px;padding:36px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.login-card .logo{text-align:center;margin-bottom:24px}
+.login-card .logo img{width:160px;height:auto}
+.login-card .logo p{font-size:13px;color:#718096;margin-top:6px}
+.login-card label{display:block;font-size:13px;font-weight:600;color:#4a5568;margin-bottom:6px}
+.login-card input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;outline:none;margin-bottom:16px;transition:border-color .2s}
+.login-card input:focus{border-color:#b8972a}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,#c9a227,#a07818);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+.btn-primary:hover{opacity:.92}
+.login-error{color:#e53e3e;font-size:13px;text-align:center;margin-top:10px;display:none}
+.admin-link{text-align:center;margin-top:16px;font-size:13px;color:#718096}
+.admin-link a{color:#b8972a;cursor:pointer;font-weight:600}
+
+.topbar{background:#1a1f35;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-logo{display:flex;align-items:center;gap:10px}
+.topbar-logo img{height:36px;width:auto}
+.topbar-logo .tinfo h2{font-size:14px;font-weight:700;color:#fff}
+.topbar-logo .tinfo p{font-size:11px;color:#a0aec0}
+.btn-logout{padding:7px 15px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+
+#staffScreen{background:#f0f2f5}
+.staff-content{padding:16px;max-width:480px;margin:0 auto;width:100%}
+.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.card h3{font-size:11px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
+.card label{display:block;font-size:13px;font-weight:600;color:#4a5568;margin-bottom:5px;margin-top:10px}
+.card select{width:100%;padding:10px 13px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;background:#fff}
+
+.status-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:20px;font-size:14px;font-weight:600;margin-bottom:5px}
+.badge-out{background:#fed7d7;color:#c53030}
+.badge-in{background:#c6f6d5;color:#276749}
+.badge-break{background:#fefcbf;color:#744210}
+.status-time{font-size:12px;color:#a0aec0}
+
+.gps-bar{display:flex;align-items:center;gap:8px;font-size:13px;padding:10px 14px;border-radius:10px;margin-bottom:12px}
+.gps-ok{background:#f0fff4;color:#276749;border:1px solid #9ae6b4}
+.gps-fail{background:#fff5f5;color:#c53030;border:1px solid #feb2b2}
+.gps-loading{background:#fffff0;color:#744210;border:1px solid #f6e05e}
+.gps-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:#48bb78}.dot-fail{background:#fc8181}.dot-spin{background:#d69e2e;animation:pulse 1s infinite}
+
+.action-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.btn-action{padding:16px 8px;border:none;border-radius:14px;font-weight:700;cursor:pointer;transition:transform .1s;display:flex;flex-direction:column;align-items:center;gap:4px}
+.btn-action:active{transform:scale(.97)}
+.btn-action:disabled{opacity:.32;cursor:not-allowed}
+.btn-action .ico{font-size:22px}.btn-action .lbl{font-size:12px}
+.btn-ci{background:linear-gradient(135deg,#48bb78,#38a169);color:#fff}
+.btn-co{background:linear-gradient(135deg,#fc8181,#e53e3e);color:#fff}
+.btn-bi{background:linear-gradient(135deg,#f6e05e,#d69e2e);color:#744210}
+.btn-bo{background:linear-gradient(135deg,#63b3ed,#4299e1);color:#fff}
+.btn-ot{background:linear-gradient(135deg,#b794f4,#805ad5);color:#fff}
+.btn-mc{background:linear-gradient(135deg,#76e4f7,#0bc5ea);color:#065666}
+.mc-row{display:flex;justify-content:space-between;font-size:13px;margin-top:6px;color:#0987a0;font-weight:600}
+.mc-cell{color:#0987a0;font-weight:600}
+.mc-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;background:#e6fffa;color:#0987a0;margin-top:4px}
+.upload-box{border:2px dashed #e2e8f0;border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:13px}
+.upload-box:hover{border-color:#b8972a}
+.upload-box .upload-icon{font-size:28px;margin-bottom:6px}
+.upload-box p{font-size:13px;color:#718096}
+.upload-box .file-name{font-size:12px;color:#48bb78;font-weight:600;margin-top:4px}
+.preview-img{max-width:100%;max-height:180px;border-radius:8px;margin-top:8px;display:none}
+
+.log-entry{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f7fafc;font-size:13px}
+.log-entry:last-child{border-bottom:none}
+.log-type{font-weight:600}.log-time{color:#718096;font-size:12px}
+.log-flag{font-size:11px;color:#e53e3e;font-weight:600}
+.total-hours{margin-top:10px;padding-top:10px;border-top:2px solid #e2e8f0;display:flex;justify-content:space-between;font-size:14px;font-weight:700}
+.ot-row{display:flex;justify-content:space-between;font-size:13px;margin-top:6px;color:#805ad5;font-weight:600}
+.empty-state{text-align:center;padding:28px;color:#a0aec0;font-size:14px}
+.live-chip{display:inline-block;width:7px;height:7px;background:#48bb78;border-radius:50%;margin-right:5px;animation:pulse 1.5s infinite}
+
+#adminScreen{background:#f0f2f5}
+.admin-topbar{background:#1a1f35;padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.admin-topbar-logo{display:flex;align-items:center;gap:10px}
+.admin-topbar-logo img{height:36px;width:auto}
+.admin-topbar-logo span{font-size:15px;font-weight:700;color:#fff}
+.btn-al{padding:7px 15px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.admin-tabs{background:#fff;display:flex;border-bottom:1px solid #e2e8f0;overflow-x:auto}
+.atab{padding:13px 16px;font-size:13px;font-weight:600;color:#718096;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.atab.active{color:#b8972a;border-bottom-color:#b8972a}
+.admin-content{padding:18px;max-width:1000px;margin:0 auto}
+
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-row select,.filter-row input{padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;background:#fff}
+.filter-row label{font-size:12px;font-weight:600;color:#718096}
+.export-btn{padding:8px 14px;background:#48bb78;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+
+.rtable{background:#fff;border-radius:14px;overflow:auto;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.rtable table{width:100%;border-collapse:collapse;font-size:13px;min-width:720px}
+.rtable th{background:#f7fafc;padding:11px 13px;text-align:left;font-weight:600;color:#4a5568;border-bottom:1px solid #e2e8f0}
+.rtable td{padding:10px 13px;border-bottom:1px solid #f7fafc}
+.rtable tr:last-child td{border-bottom:none}
+.flag-cell{color:#e53e3e;font-weight:600;font-size:11px}
+.ot-cell{color:#805ad5;font-weight:600}
+
+.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.sc{background:#fff;border-radius:14px;padding:15px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sc .val{font-size:26px;font-weight:700}.sc .lbl{font-size:11px;color:#718096;margin-top:3px}
+
+.staff-mgmt{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:14px}
+.staff-mgmt h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.staff-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f7fafc;font-size:14px}
+.staff-row:last-child{border-bottom:none}
+.sinfo{display:flex;flex-direction:column;gap:2px}
+.sname{font-weight:600}.soutlet{font-size:11px;color:#718096}
+.btn-edit{padding:5px 11px;background:#ebf8ff;color:#3182ce;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-del{padding:5px 9px;background:#fff5f5;color:#e53e3e;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;margin-left:5px}
+
+.shift-editor{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.shift-editor h3{font-size:14px;font-weight:700;margin-bottom:3px}
+.shift-editor .sub{font-size:12px;color:#718096;margin-bottom:14px}
+.outlet-tabs{display:flex;gap:8px;margin-bottom:14px}
+.otab{padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #e2e8f0;background:#f7fafc;color:#4a5568}
+.otab.active{background:#b8972a;color:#fff;border-color:#b8972a}
+.shift-list{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.shift-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f7fafc;border-radius:10px;font-size:13px}
+.shift-item .slabel{flex:1;font-weight:600}.shift-item .stime{color:#718096;font-size:12px}
+.btn-del-shift{padding:4px 8px;background:#fed7d7;color:#c53030;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600}
+.add-shift-form{display:flex;flex-wrap:wrap;gap:7px;align-items:flex-end}
+.add-shift-form input{padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;background:#fff}
+.add-shift-form input[type=text]{flex:1;min-width:140px}
+.add-shift-form input[type=time]{width:115px}
+.btn-add-shift{padding:8px 14px;background:#b8972a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:26px;width:100%;max-width:380px}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:18px}
+.modal label{display:block;font-size:13px;font-weight:600;color:#4a5568;margin-bottom:5px}
+.modal input,.modal select{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;margin-bottom:13px}
+.modal-btns{display:flex;gap:9px}
+.btn-save{flex:1;padding:11px;background:#b8972a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.btn-cancel{flex:1;padding:11px;background:#e2e8f0;color:#4a5568;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.ot-info{background:#faf5ff;border:1px solid #d6bcfa;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:#553c9a}
+.ot-info b{display:block;font-size:14px;margin-bottom:4px}
+
+.logo-text{font-size:22px;font-weight:800;color:#1a1f35;letter-spacing:1px}
+.logo-text span{color:#b8972a}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="screen active">
+  <div class="login-card">
+    <div class="logo">
+      <div class="logo-text"><span>MANA</span> PHARMACY</div>
+      <p>Staff Attendance System</p>
+    </div>
+    <label>Username</label>
+    <input type="text" id="loginUser" placeholder="Enter username" autocomplete="off" autocapitalize="none">
+    <label>Password</label>
+    <input type="password" id="loginPass" placeholder="Enter password">
+    <button class="btn-primary" id="loginBtn">Sign In</button>
+    <div class="login-error" id="loginError">Invalid username or password.</div>
+    <div class="admin-link"><a id="adminLink">Admin Login →</a></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0;text-align:center">
+      <p style="font-size:11px;color:#a0aec0">Can't log in? Contact your admin to reset your password.</p>
+    </div>
+  </div>
+</div>
+
+<!-- STAFF -->
+<div id="staffScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-text" style="font-size:16px"><span>MANA</span></div>
+      <div class="tinfo">
+        <h2 id="staffGreeting">Hello!</h2>
+        <p id="staffSub"></p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="syncStatus" style="font-size:11px;color:#a0aec0"></span>
+      <button class="btn-logout" id="staffLogoutBtn">Sign Out</button>
+    </div>
+  </div>
+  <div class="staff-content">
+    <div class="card">
+      <h3>Status</h3>
+      <div class="status-badge badge-out" id="statusBadge">🔴 Clocked Out</div>
+      <div class="status-time" id="statusTime"></div>
+    </div>
+    <div id="gpsBar" class="gps-bar gps-loading">
+      <div class="gps-dot dot-spin"></div>
+      <span id="gpsMsg">Checking your location…</span>
+    </div>
+    <div class="card" id="shiftCard">
+      <h3>Select Outlet &amp; Shift</h3>
+      <label>Working At</label>
+      <select id="outletSelect">
+        <option value="Gala City">Gala City</option>
+        <option value="Samariang">Samariang</option>
+      </select>
+      <label>Shift</label>
+      <select id="shiftSelect"><option value="">-- Select Shift --</option></select>
+    </div>
+    <div class="action-btns">
+      <button class="btn-action btn-ci" id="btnCI"><span class="ico">🟢</span><span class="lbl">Clock In</span></button>
+      <button class="btn-action btn-co" id="btnCO" disabled><span class="ico">🔴</span><span class="lbl">Clock Out</span></button>
+      <button class="btn-action btn-bi" id="btnBI" disabled><span class="ico">☕</span><span class="lbl">Start Break</span></button>
+      <button class="btn-action btn-bo" id="btnBO" disabled><span class="ico">▶️</span><span class="lbl">End Break</span></button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <button class="btn-action btn-ot" id="btnOT" disabled style="padding:14px"><span class="ico">⏰</span><span class="lbl">Request OT</span></button>
+      <button class="btn-action btn-mc" id="btnMC" style="padding:14px"><span class="ico">🏥</span><span class="lbl">Submit MC</span></button>
+    </div>
+    <div class="card">
+      <h3><span class="live-chip"></span>Today's Log</h3>
+      <div id="logList"><div class="empty-state">No records yet today.</div></div>
+      <div class="total-hours" id="totalRow" style="display:none"><span>Total Working Hours</span><span id="totalVal">—</span></div>
+      <div class="ot-row" id="otRow" style="display:none"><span>⏰ OT Hours</span><span id="otVal">—</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminScreen" class="screen">
+  <div class="admin-topbar">
+    <div class="admin-topbar-logo">
+      <div class="logo-text" style="font-size:16px"><span>MANA</span> PHARMACY</div>
+      <span style="color:#a0aec0;font-size:13px;margin-left:8px">Admin</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="adminSyncStatus" style="font-size:11px;color:#a0aec0"></span>
+      <button class="btn-al" id="adminLogoutBtn">Sign Out</button>
+    </div>
+  </div>
+  <div class="admin-tabs">
+    <div class="atab active" data-tab="overview">Overview</div>
+    <div class="atab" data-tab="records">Records</div>
+    <div class="atab" data-tab="ot">OT Requests</div>
+    <div class="atab" data-tab="mc">MC Records</div>
+    <div class="atab" data-tab="staff">Staff</div>
+    <div class="atab" data-tab="shifts">Shifts</div>
+  </div>
+  <div class="admin-content">
+    <div id="tabOverview">
+      <div class="summary-cards" id="summaryCards"></div>
+      <div class="rtable" id="liveTable"></div>
+    </div>
+    <div id="tabRecords" style="display:none">
+      <div class="filter-row">
+        <select id="fOutlet"><option value="">All Outlets</option><option>Gala City</option><option>Samariang</option></select>
+        <select id="fStaff"><option value="">All Staff</option></select>
+        <label>From</label><input type="date" id="fDateFrom">
+        <label>To</label><input type="date" id="fDateTo">
+        <button class="export-btn" id="exportBtn">⬇ Export CSV</button>
+      </div>
+      <div class="rtable" id="recordsTable"></div>
+    </div>
+    <div id="tabOt" style="display:none">
+      <div class="filter-row">
+        <select id="fOtOutlet"><option value="">All Outlets</option><option>Gala City</option><option>Samariang</option></select>
+        <select id="fOtStatus"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+        <label>From</label><input type="date" id="fOtFrom">
+        <label>To</label><input type="date" id="fOtTo">
+      </div>
+      <div class="rtable" id="otTable"></div>
+    </div>
+    <div id="tabMc" style="display:none">
+      <div class="filter-row">
+        <select id="fMcOutlet"><option value="">All Outlets</option><option>Gala City</option><option>Samariang</option></select>
+        <select id="fMcStaff"><option value="">All Staff</option></select>
+        <select id="fMcStatus"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+        <label>From</label><input type="date" id="fMcFrom">
+        <label>To</label><input type="date" id="fMcTo">
+      </div>
+      <div class="rtable" id="mcTable"></div>
+    </div>
+    <div id="tabStaff" style="display:none">
+      <div class="staff-mgmt"><h3>Staff Accounts <span style="font-size:12px;color:#718096;font-weight:400">— default password: pass123</span></h3><div id="staffList"></div></div>
+      <div style="margin-top:10px"><button class="btn-add-shift" id="addStaffBtn">+ Add Staff</button></div>
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0">
+        <p style="font-size:12px;color:#718096;margin-bottom:8px">⚠️ Danger Zone — only use if something is broken</p>
+        <button id="resetStaffOnlyBtn" style="padding:8px 14px;background:#fff5f5;color:#c53030;border:1px solid #feb2b2;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-right:8px">Reset Staff Passwords Only</button>
+        <button id="resetAllBtn" style="padding:8px 14px;background:#fff5f5;color:#c53030;border:1px solid #feb2b2;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Reset Everything (wipes all records)</button>
+      </div>
+    </div>
+    <div id="tabShifts" style="display:none">
+      <div class="shift-editor">
+        <h3>Manage Shifts</h3>
+        <p class="sub">Add or remove shifts per outlet. Changes apply immediately.</p>
+        <div class="outlet-tabs">
+          <div class="otab active" data-outlet="Gala City">Gala City</div>
+          <div class="otab" data-outlet="Samariang">Samariang</div>
+          <button onclick="window._clearAllShifts()" style="margin-left:auto;padding:6px 12px;background:#fff5f5;color:#c53030;border:1px solid #feb2b2;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">🗑 Clear All</button>
+        </div>
+        <div class="shift-list" id="shiftList"></div>
+        <div class="add-shift-form">
+          <input type="text" id="newShiftLabel" placeholder="Shift name e.g. Morning">
+          <input type="time" id="newShiftStart">
+          <input type="time" id="newShiftEnd">
+          <button class="btn-add-shift" id="addShiftBtn">+ Add Shift</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT STAFF MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3 id="editModalTitle">Edit Staff</h3>
+    <label>Name</label><input type="text" id="eName">
+    <label>Username</label><input type="text" id="eUser">
+    <label>Password <span style="font-weight:400;color:#a0aec0">(blank = keep current)</span></label>
+    <input type="password" id="ePass" placeholder="Leave blank to keep">
+    <label>Home Outlet</label>
+    <select id="eOutlet"><option value="Gala City">Gala City</option><option value="Samariang">Samariang</option></select>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="editCancelBtn">Cancel</button>
+      <button class="btn-save" id="editSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MC MODAL -->
+<div class="modal-overlay" id="mcModal">
+  <div class="modal">
+    <h3>🏥 Submit Medical Certificate</h3>
+    <p style="font-size:13px;color:#718096;margin-bottom:16px">Select the outlet and shift you were supposed to work, then upload your MC.</p>
+    <label>Outlet</label>
+    <select id="mcOutletSelect">
+      <option value="Gala City">Gala City</option>
+      <option value="Samariang">Samariang</option>
+    </select>
+    <label>Shift You Were Scheduled</label>
+    <select id="mcShiftSelect"><option value="">-- Select Shift --</option></select>
+    <label>MC Date</label>
+    <input type="date" id="mcDate">
+    <label>MC / Sick Leave Document</label>
+    <div class="upload-box" id="mcUploadBox">
+      <div class="upload-icon">📎</div>
+      <p>Tap to upload MC document</p>
+      <div class="file-name" id="mcFileName"></div>
+      <img id="mcPreview" class="preview-img" alt="MC Preview">
+    </div>
+    <input type="file" id="mcFileInput" accept="image/*,.pdf" style="display:none">
+    <label>Notes (optional)</label>
+    <input type="text" id="mcNotes" placeholder="e.g. Fever, clinic name">
+    <div class="modal-btns">
+      <button class="btn-cancel" id="mcCancelBtn">Cancel</button>
+      <button class="btn-save" id="mcSubmitBtn" style="background:#0bc5ea">Submit MC</button>
+    </div>
+  </div>
+</div>
+
+<!-- OT MODAL -->
+<div class="modal-overlay" id="otModal">
+  <div class="modal">
+    <h3>⏰ Request Overtime</h3>
+    <div class="ot-info" id="otInfo"></div>
+    <label>OT Start Time</label><input type="time" id="otStart">
+    <label>OT End Time</label><input type="time" id="otEnd">
+    <label>Reason / Notes</label><input type="text" id="otReason" placeholder="e.g. Stock check, extra customers">
+    <div class="modal-btns">
+      <button class="btn-cancel" id="otCancelBtn">Cancel</button>
+      <button class="btn-save" id="otSubmitBtn">Submit OT</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ── LARK ──────────────────────────────────────────────────────────
+  var LARK = {
+    appId:     'cli_aa9be5a0a9f8de15',
+    appSecret: 'DYsNvfQJQBBlbLYdyqmwXbzLb1c3gXqk',
+    base:      'IdhmbEo1eaxPmcsuS9BjV6Sfp4g',
+    api:       'https://lark-proxy.cool-sun-49f1.workers.dev/open-apis'
+  };
+  var _tok = null, _tokExp = 0, _tids = null;
+
+  async function getToken() {
+    if (_tok && Date.now() < _tokExp) return _tok;
+    try {
+      var r = await fetch(LARK.api + '/auth/v3/app_access_token/internal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_id: LARK.appId, app_secret: LARK.appSecret })
+      });
+      var d = await r.json();
+      if (d.code === 0) {
+        _tok = d.app_access_token;
+        _tokExp = Date.now() + (d.expire - 60) * 1000;
+        return _tok;
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  async function getTids() {
+    if (_tids) return _tids;
+    var tok = await getToken(); if (!tok) return {};
+    try {
+      var r = await fetch(LARK.api + '/bitable/v1/apps/' + LARK.base + '/tables', {
+        headers: { 'Authorization': 'Bearer ' + tok }
+      });
+      var d = await r.json();
+      if (d.code === 0) {
+        _tids = {};
+        d.data.items.forEach(function(t) { _tids[t.name] = t.table_id; });
+        return _tids;
+      }
+    } catch(e) {}
+    return {};
+  }
+
+  async function lCreate(tbl, fields) {
+    var tok = await getToken(), ids = await getTids();
+    if (!tok || !ids[tbl]) return null;
+    try {
+      var r = await fetch(LARK.api + '/bitable/v1/apps/' + LARK.base + '/tables/' + ids[tbl] + '/records', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: fields })
+      });
+      var d = await r.json();
+      return d.code === 0 ? d.data.record.record_id : null;
+    } catch(e) { return null; }
+  }
+
+  async function lUpdate(tbl, rid, fields) {
+    var tok = await getToken(), ids = await getTids();
+    if (!tok || !ids[tbl] || !rid) return false;
+    try {
+      var r = await fetch(LARK.api + '/bitable/v1/apps/' + LARK.base + '/tables/' + ids[tbl] + '/records/' + rid, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: fields })
+      });
+      var d = await r.json();
+      return d.code === 0;
+    } catch(e) { return false; }
+  }
+
+  async function lList(tbl) {
+    var tok = await getToken(), ids = await getTids();
+    if (!tok || !ids[tbl]) return [];
+    var all = [], more = true, pt = '';
+    while (more) {
+      try {
+        var url = LARK.api + '/bitable/v1/apps/' + LARK.base + '/tables/' + ids[tbl] + '/records?page_size=100' + (pt ? '&page_token=' + pt : '');
+        var r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + tok } });
+        var d = await r.json();
+        if (d.code === 0) { all = all.concat(d.data.items); more = d.data.has_more; pt = d.data.page_token || ''; }
+        else { more = false; }
+      } catch(e) { more = false; }
+    }
+    return all;
+  }
+
+  async function lDelete(tbl, rid) {
+    var tok = await getToken(), ids = await getTids();
+    if (!tok || !ids[tbl] || !rid) return false;
+    try {
+      var r = await fetch(LARK.api + '/bitable/v1/apps/' + LARK.base + '/tables/' + ids[tbl] + '/records/' + rid, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + tok }
+      });
+      var d = await r.json();
+      return d.code === 0;
+    } catch(e) { return false; }
+  }
+
+  async function fetchShiftsFromLark() {
+    var items = await lList('Shifts');
+    if (!items.length) return null;
+    var result = {};
+    items.forEach(function(item) {
+      var f = item.fields, outlet = f.Outlet || '';
+      if (!result[outlet]) result[outlet] = [];
+      result[outlet].push({ id: f.ShiftId || item.record_id, label: f.Label || '', start: f.Start || '', end: f.End || '', larkId: item.record_id });
+    });
+    return result;
+  }
+
+  async function fetchStaffFromLark() {
+    var items = await lList('Staff');
+    if (!items.length) return null;
+    return items.map(function(item) {
+      return {
+        name:   item.fields.Name     || '',
+        user:   item.fields.Username || '',
+        pass:   item.fields.Password || '',
+        outlet: item.fields.Outlet   || '',
+        larkId: item.record_id
+      };
+    });
+  }
+
+  function syncMsg(id, msg, color) {
+    var el = ge(id); if (el) { el.textContent = msg; el.style.color = color || '#a0aec0'; }
+  }
+
+  // ── DATA ──────────────────────────────────────────────────────────
+  var OUTLETS = {
+    "Gala City":  { lat: 1.5101406, lng: 110.3516057, radius: 50 },
+    "Samariang":  { lat: 1.6353945, lng: 110.3416911, radius: 50 }
+  };
+
+  function defaultShifts() {
+    return {
+      "Gala City": [
+        {id:"gc1",label:"Morning", start:"09:30",end:"17:30"},
+        {id:"gc2",label:"Afternoon", start:"12:30",end:"21:30"},
+        {id:"gc3",label:"Full Day",start:"09:30",end:"21:30"}
+      ],
+      "Samariang": [
+        {id:"sm1",label:"Morning",   start:"08:30",end:"17:30"},
+        {id:"sm2",label:"Afternoon", start:"12:30",end:"21:30"},
+        {id:"sm4",label:"Full Day",  start:"08:30",end:"21:30"}
+      ]
+    };
+  }
+
+  function defaultStaff() {
+    return [
+      {name:"Conny",  user:"conny",  pass:"pass123",outlet:"Gala City"},
+      {name:"Meeda",  user:"meeda",  pass:"pass123",outlet:"Gala City"},
+      {name:"Ivan",   user:"ivan",   pass:"pass123",outlet:"Gala City"},
+      {name:"Nina",   user:"nina",   pass:"pass123",outlet:"Gala City"},
+      {name:"Jared",  user:"jared",  pass:"pass123",outlet:"Gala City"},
+      {name:"Carrie", user:"carrie", pass:"pass123",outlet:"Samariang"},
+      {name:"Johnson",user:"johnson",pass:"pass123",outlet:"Samariang"},
+      {name:"Mell",   user:"mell",   pass:"pass123",outlet:"Samariang"},
+      {name:"ADMIN",  user:"admin",  pass:"admin123",outlet:""}
+    ];
+  }
+
+  function lsGet(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e) { return d; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+
+  var staff      = lsGet('mp_staff',   null) || defaultStaff();
+  var shifts     = lsGet('mp_shifts',  null) || defaultShifts();
+  var records    = lsGet('mp_records', null) || [];
+  var otRequests = lsGet('mp_ot',      null) || [];
+  var mcRecords  = lsGet('mp_mc',      null) || [];
+  var mcFileData = null, mcFile = null;
+
+  if (shifts["Samariang"]) {
+    shifts["Samariang"] = shifts["Samariang"].filter(function(s){
+      var lbl = s.label.toLowerCase();
+      return lbl !== 'evening' && lbl !== 'pharmacist shift' && lbl !== 'pharmacist';
+    });
+    lsSet('mp_shifts', shifts);
+  }
+
+  var currentUser = null, editIdx = null, editIsNew = false, editUsername = null;
+  var currentShiftOutlet = "Gala City";
+  var gpsOk = false, userLat = null, userLng = null, gpsWatcher = null;
+
+  function saveAll() {
+    lsSet('mp_staff', staff); lsSet('mp_shifts', shifts);
+    lsSet('mp_records', records); lsSet('mp_ot', otRequests); lsSet('mp_mc', mcRecords);
+  }
+
+  // ── GPS ───────────────────────────────────────────────────────────
+  function haversine(la1, lo1, la2, lo2) {
+    var R=6371000, r=Math.PI/180;
+    var dL=(la2-la1)*r, dO=(lo2-lo1)*r;
+    var a=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dO/2)*Math.sin(dO/2);
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+
+  function startGPS() {
+    if (!navigator.geolocation) { setGPS(false, 'GPS not supported on this device.'); return; }
+    setGPS(null, 'Checking your location…');
+    if (gpsWatcher) navigator.geolocation.clearWatch(gpsWatcher);
+    gpsWatcher = navigator.geolocation.watchPosition(
+      function(p) { userLat = p.coords.latitude; userLng = p.coords.longitude; checkGPSForOutlet(); },
+      function()  { setGPS(false, 'Location access denied. Please enable GPS.'); },
+      {enableHighAccuracy: true, timeout: 15000, maximumAge: 8000}
+    );
+  }
+
+  function checkGPSForOutlet() {
+    if (userLat === null) return;
+    var outlet = ge('outletSelect').value;
+    if (!outlet || !OUTLETS[outlet]) { setGPS(false, 'Unknown outlet.'); return; }
+    var o = OUTLETS[outlet], dist = haversine(userLat, userLng, o.lat, o.lng);
+    if (dist <= o.radius) setGPS(true, '✓ You are at ' + outlet + ' (' + Math.round(dist) + 'm away)');
+    else setGPS(false, 'You are ' + Math.round(dist) + 'm from ' + outlet + '. Must be within ' + o.radius + 'm.');
+  }
+
+  function setGPS(ok, msg) {
+    gpsOk = (ok === true);
+    var bar = ge('gpsBar'), dot = bar.querySelector('.gps-dot');
+    if (ok === null) { bar.className='gps-bar gps-loading'; dot.className='gps-dot dot-spin'; }
+    else if (ok)     { bar.className='gps-bar gps-ok';      dot.className='gps-dot dot-ok'; }
+    else             { bar.className='gps-bar gps-fail';     dot.className='gps-dot dot-fail'; }
+    ge('gpsMsg').textContent = msg;
+    updateActionBtns();
+  }
+
+  function updateActionBtns() {
+    var sess = getSession();
+    var doneToday = records.find(function(r){ return r.staff===currentUser.name && r.date===todayStr() && r.clockOut; });
+    var ci=ge('btnCI'), co=ge('btnCO'), bi=ge('btnBI'), bo=ge('btnBO'), ot=ge('btnOT');
+    if (!sess) {
+      ci.disabled=!gpsOk; co.disabled=true; bi.disabled=true; bo.disabled=true;
+      ot.disabled = !(doneToday && !doneToday.otId);
+    } else if (sess.onBreak) {
+      ci.disabled=true; co.disabled=true; bi.disabled=true; bo.disabled=!gpsOk; ot.disabled=true;
+    } else {
+      ci.disabled=true; co.disabled=false; bi.disabled=!gpsOk; bo.disabled=true; ot.disabled=true;
+    }
+  }
+
+  // ── AUTH ──────────────────────────────────────────────────────────
+  async function doLogin() {
+    var u = ge('loginUser').value.trim().toLowerCase();
+    var p = ge('loginPass').value;
+    if (!u || !p) { ge('loginError').style.display='block'; ge('loginError').textContent='Please enter username and password.'; return; }
+    ge('loginBtn').disabled = true; ge('loginBtn').textContent = 'Signing in…';
+    var larkStaff = await fetchStaffFromLark();
+    if (larkStaff && larkStaff.length > 0) {
+      staff = larkStaff;
+      lsSet('mp_staff', staff);
+    } else {
+      staff = lsGet('mp_staff', null) || defaultStaff();
+    }
+    ge('loginBtn').disabled = false; ge('loginBtn').textContent = 'Sign In';
+    var found = staff.find(function(s){ return s.user.toLowerCase()===u && s.pass===p; });
+    if (!found) { ge('loginError').style.display='block'; ge('loginError').textContent='Invalid username or password.'; return; }
+    ge('loginError').style.display = 'none';
+    currentUser = found;
+    if (found.name === 'ADMIN') { showAdmin(); return; }
+    showStaff();
+  }
+
+  function logout() {
+    currentUser = null;
+    if (gpsWatcher) { navigator.geolocation.clearWatch(gpsWatcher); gpsWatcher = null; }
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    ge('loginScreen').classList.add('active');
+    ge('loginUser').value = ''; ge('loginPass').value = '';
+  }
+
+  // ── STAFF ─────────────────────────────────────────────────────────
+  function showStaff() {
+    showScreen('staffScreen');
+    ge('staffGreeting').textContent = 'Hello, ' + currentUser.name + '!';
+    ge('staffSub').textContent = 'Home: ' + currentUser.outlet;
+    ge('outletSelect').value = currentUser.outlet;
+    populateShifts(currentUser.outlet);
+    startGPS();
+    refreshStaffUI();
+  }
+
+  function populateShifts(outlet) {
+    var sel = ge('shiftSelect');
+    sel.innerHTML = '<option value="">-- Select Shift --</option>';
+    var list = shifts[outlet] || [];
+    list.forEach(function(sh) {
+      var o = document.createElement('option');
+      o.value = sh.id; o.textContent = sh.label + '  ' + sh.start + ' – ' + sh.end;
+      sel.appendChild(o);
+    });
+  }
+
+  function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+  function getSession() {
+    var t = todayStr();
+    for (var i=0; i<records.length; i++) {
+      if (records[i].staff===currentUser.name && records[i].date===t && !records[i].clockOut) return records[i];
+    }
+    return null;
+  }
+
+  function refreshStaffUI() {
+    var sess = getSession();
+    var badge=ge('statusBadge'), stime=ge('statusTime'), shiftCard=ge('shiftCard');
+    if (!sess) {
+      badge.className='status-badge badge-out'; badge.textContent='🔴 Clocked Out';
+      stime.textContent=''; shiftCard.style.display='';
+    } else if (sess.onBreak) {
+      badge.className='status-badge badge-break'; badge.textContent='☕ On Break';
+      stime.textContent='Break since '+ft(sess.breakStart); shiftCard.style.display='none';
+    } else {
+      badge.className='status-badge badge-in'; badge.textContent='🟢 Clocked In';
+      stime.textContent='At '+sess.outlet+' since '+ft(sess.clockIn); shiftCard.style.display='none';
+    }
+    updateActionBtns();
+    renderTodayLog();
+  }
+
+  async function clockIn() {
+    if (!gpsOk) { alert('You must be within 50m of the outlet to clock in.'); return; }
+    var outlet = ge('outletSelect').value, shiftId = ge('shiftSelect').value;
+    if (!shiftId) { alert('Please select a shift first.'); return; }
+    var allS = getAllShifts(), shift = findById(allS, shiftId);
+    var now = new Date(), nowM = now.getHours()*60 + now.getMinutes();
+    var parts = shift.start.split(':'), lateM = nowM - (parseInt(parts[0])*60 + parseInt(parts[1]));
+    var flags = lateM > 5 ? ['Late by ' + lateM + ' min'] : [];
+    var rec = {
+      id: Date.now(), staff: currentUser.name, outlet: outlet, date: todayStr(),
+      shiftId: shiftId, shiftLabel: shift.label + ' ' + shift.start + '–' + shift.end,
+      clockIn: now.toISOString(), clockOut: null,
+      breaks: [], onBreak: false, breakStart: null,
+      flags: flags, totalWorkMins: null, otId: null,
+      gpsIn: {lat: userLat, lng: userLng}, larkId: null
+    };
+    records.push(rec);
+    saveAll(); refreshStaffUI();
+    syncMsg('syncStatus', '⟳ Syncing…', '#a0aec0');
+    var rid = await lCreate('Attendance', {
+      RecordID:   String(rec.id),
+      Staff:      rec.staff,
+      Outlet:     rec.outlet,
+      Date:       rec.date,
+      ShiftLabel: rec.shiftLabel,
+      ClockIn:    rec.clockIn,
+      ClockOut:   '',
+      BreakMins:  0,
+      WorkMins:   0,
+      Flags:      flags.join(', '),
+      OTId:       ''
+    });
+    rec.larkId = rid; saveAll();
+    syncMsg('syncStatus', rid ? '✓ Synced' : '⚠ Offline', rid ? '#48bb78' : '#fc8181');
+  }
+
+  async function clockOut() {
+    var sess = getSession(); if (!sess) return;
+    var now = new Date();
+    sess.clockOut = now.toISOString(); sess.onBreak = false;
+    var tb = sess.breaks.reduce(function(a,b){ return b.end ? a + Math.round((new Date(b.end)-new Date(b.start))/60000) : a; }, 0);
+    sess.totalWorkMins = Math.round((now - new Date(sess.clockIn))/60000) - tb;
+    var allS = getAllShifts(), shift = findById(allS, sess.shiftId);
+    if (shift) {
+      var ep = shift.end.split(':'), eM = parseInt(ep[0])*60 + parseInt(ep[1]);
+      var nM = now.getHours()*60 + now.getMinutes();
+      if (eM - nM > 5) sess.flags.push('Left early by ' + (eM-nM) + ' min');
+    }
+    saveAll(); refreshStaffUI();
+    if (sess.larkId) {
+      syncMsg('syncStatus', '⟳ Syncing…', '#a0aec0');
+      var ok = await lUpdate('Attendance', sess.larkId, {
+        ClockOut:  sess.clockOut,
+        BreakMins: tb,
+        WorkMins:  sess.totalWorkMins,
+        Flags:     sess.flags.join(', ')
+      });
+      syncMsg('syncStatus', ok ? '✓ Synced' : '⚠ Offline', ok ? '#48bb78' : '#fc8181');
+    }
+  }
+
+  async function breakStart() {
+    if (!gpsOk) { alert('You must be within 50m of the outlet to start a break.'); return; }
+    var sess = getSession(); if (!sess) return;
+    sess.onBreak = true; sess.breakStart = new Date().toISOString();
+    sess.breaks.push({start: sess.breakStart, end: null});
+    saveAll(); refreshStaffUI();
+  }
+
+  async function breakEnd() {
+    if (!gpsOk) { alert('You must be within 50m of the outlet to end your break.'); return; }
+    var sess = getSession(); if (!sess) return;
+    var lb = sess.breaks[sess.breaks.length-1];
+    if (lb) lb.end = new Date().toISOString();
+    sess.onBreak = false; sess.breakStart = null;
+    saveAll(); refreshStaffUI();
+    if (sess.larkId) {
+      var tb = sess.breaks.reduce(function(a,b){ return b.end ? a+Math.round((new Date(b.end)-new Date(b.start))/60000) : a; }, 0);
+      lUpdate('Attendance', sess.larkId, { BreakMins: tb });
+    }
+  }
+
+  function openOTModal() {
+    var rec = null, t = todayStr();
+    for (var i=0; i<records.length; i++) {
+      if (records[i].staff===currentUser.name && records[i].date===t && records[i].clockOut) { rec=records[i]; break; }
+    }
+    if (!rec) return;
+    ge('otInfo').innerHTML = '<b>' + currentUser.name + ' · ' + rec.outlet + '</b>Shift: ' + rec.shiftLabel + '<br>Clocked out: ' + ft(rec.clockOut);
+    ge('otStart').value = new Date(rec.clockOut).toTimeString().slice(0,5);
+    ge('otEnd').value = ''; ge('otReason').value = '';
+    ge('otModal').classList.add('open');
+  }
+
+  async function submitOT() {
+    var start = ge('otStart').value, end = ge('otEnd').value, reason = ge('otReason').value.trim();
+    if (!start || !end) { alert('Please enter OT start and end times.'); return; }
+    var sp = start.split(':'), ep = end.split(':');
+    var otMins = (parseInt(ep[0])*60+parseInt(ep[1])) - (parseInt(sp[0])*60+parseInt(sp[1]));
+    if (otMins <= 0) { alert('OT end time must be after start time.'); return; }
+    var t = todayStr(), rec = null;
+    for (var i=0; i<records.length; i++) {
+      if (records[i].staff===currentUser.name && records[i].date===t && records[i].clockOut) { rec=records[i]; break; }
+    }
+    var otId = 'ot' + Date.now();
+    rec.otId = otId;
+    var otRec = {
+      id: otId, staff: currentUser.name, outlet: rec.outlet, date: t,
+      shiftLabel: rec.shiftLabel, otStart: start, otEnd: end, otMins: otMins,
+      reason: reason, status: 'pending', submittedAt: new Date().toISOString(), larkId: null
+    };
+    otRequests.push(otRec);
+    saveAll(); closeModal('otModal'); refreshStaffUI();
+    alert('OT request submitted! Pending admin approval.');
+    var rid = await lCreate('OTRequests', {
+      OTId:       otId,
+      Staff:      otRec.staff,
+      Outlet:     otRec.outlet,
+      Date:       otRec.date,
+      ShiftLabel: otRec.shiftLabel,
+      OTStart:    otRec.otStart,
+      OTEnd:      otRec.otEnd,
+      OTMins:     otRec.otMins,
+      Reason:     otRec.reason,
+      Status:     'pending',
+      SubmittedAt: otRec.submittedAt
+    });
+    otRec.larkId = rid; saveAll();
+    if (rec.larkId) lUpdate('Attendance', rec.larkId, { OTId: otId });
+  }
+
+  function renderTodayLog() {
+    var t = todayStr();
+    var recs = records.filter(function(r){ return r.staff===currentUser.name && r.date===t; });
+    var listEl=ge('logList'), totalRow=ge('totalRow'), otRow=ge('otRow');
+    if (!recs.length) { listEl.innerHTML='<div class="empty-state">No records yet today.</div>'; totalRow.style.display='none'; otRow.style.display='none'; return; }
+    var html = '';
+    recs.forEach(function(r) {
+      html += '<div class="log-entry"><span class="log-type">🟢 Clock In</span><span class="log-time">'+ft(r.clockIn)+' · '+r.outlet+'</span></div>';
+      if (r.flags && r.flags.length) r.flags.forEach(function(f){ html += '<div class="log-entry"><span class="log-flag">⚠️ '+f+'</span></div>'; });
+      r.breaks.forEach(function(b,i){ html += '<div class="log-entry"><span class="log-type">☕ Break '+(i+1)+'</span><span class="log-time">'+ft(b.start)+(b.end?' → '+ft(b.end):' (ongoing)')+'</span></div>'; });
+      if (r.clockOut) html += '<div class="log-entry"><span class="log-type">🔴 Clock Out</span><span class="log-time">'+ft(r.clockOut)+'</span></div>';
+      if (r.otId) { var ot=findById(otRequests,r.otId); if(ot) html+='<div class="log-entry"><span class="log-type" style="color:#805ad5">⏰ OT Requested</span><span class="log-time">'+ot.otStart+' – '+ot.otEnd+' · '+ot.status+'</span></div>'; }
+    });
+    listEl.innerHTML = html;
+    var last = recs[recs.length-1];
+    if (last && last.totalWorkMins !== null) { totalRow.style.display='flex'; ge('totalVal').textContent=fmins(last.totalWorkMins); } else totalRow.style.display='none';
+    if (last && last.otId) { var ot=findById(otRequests,last.otId); if(ot){ otRow.style.display='flex'; ge('otVal').textContent=fmins(ot.otMins)+' ('+ot.status+')'; } } else otRow.style.display='none';
+    var todayMC = null;
+    for (var mi=0; mi<mcRecords.length; mi++) { if (mcRecords[mi].staff===currentUser.name && mcRecords[mi].date===t) { todayMC=mcRecords[mi]; break; } }
+    if (todayMC) {
+      html += '<div class="log-entry"><span class="log-type" style="color:#0987a0">🏥 MC Submitted</span><span class="log-time">'+todayMC.shiftLabel+' · '+todayMC.status+'</span></div>';
+      listEl.innerHTML = html;
+    }
+  }
+
+  // ── MC ────────────────────────────────────────────────────────────
+  async function uploadFileToLark(file) {
+    var tok = await getToken(); if (!tok) return null;
+    try {
+      var fd = new FormData();
+      fd.append('file_name', file.name);
+      fd.append('parent_type', 'bitable_file');
+      fd.append('parent_node', LARK.base);
+      fd.append('size', String(file.size));
+      fd.append('file', file);
+      var r = await fetch(LARK.api + '/drive/v1/medias/upload_all', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tok },
+        body: fd
+      });
+      var d = await r.json();
+      return (d.code === 0 && d.data) ? d.data.file_token : null;
+    } catch(e) { return null; }
+  }
+
+  function openMCModal() {
+    mcFileData = null; mcFile = null;
+    ge('mcOutletSelect').value = currentUser.outlet;
+    populateMCShifts(currentUser.outlet);
+    ge('mcDate').value = todayStr();
+    ge('mcFileName').textContent = '';
+    ge('mcPreview').style.display = 'none'; ge('mcPreview').src = '';
+    ge('mcNotes').value = '';
+    ge('mcModal').classList.add('open');
+  }
+
+  function populateMCShifts(outlet) {
+    var sel = ge('mcShiftSelect');
+    sel.innerHTML = '<option value="">-- Select Shift --</option>';
+    var list = shifts[outlet] || [];
+    list.forEach(function(sh) {
+      var o = document.createElement('option');
+      o.value = sh.id; o.textContent = sh.label + '  ' + sh.start + ' – ' + sh.end;
+      sel.appendChild(o);
+    });
+  }
+
+  async function submitMC() {
+    var outlet = ge('mcOutletSelect').value, shiftId = ge('mcShiftSelect').value;
+    var date = ge('mcDate').value, notes = ge('mcNotes').value.trim();
+    if (!shiftId) { alert('Please select the shift you were scheduled for.'); return; }
+    if (!date)    { alert('Please select the MC date.'); return; }
+    if (!mcFileData) { alert('Please upload your MC document.'); return; }
+    var allS = getAllShifts(), shift = findById(allS, shiftId);
+    var mcRec = {
+      id: 'mc' + Date.now(), staff: currentUser.name, outlet: outlet, date: date,
+      shiftId: shiftId, shiftLabel: shift.label + ' ' + shift.start + '–' + shift.end,
+      notes: notes, fileData: mcFileData, fileName: ge('mcFileName').textContent,
+      status: 'pending', submittedAt: new Date().toISOString(), larkId: null
+    };
+    mcRecords.push(mcRec);
+    saveAll();
+    ge('mcSubmitBtn').disabled = true; ge('mcSubmitBtn').textContent = 'Uploading cert…';
+    var fileToken = null;
+    if (mcFile) { fileToken = await uploadFileToLark(mcFile); }
+    ge('mcSubmitBtn').textContent = 'Syncing…';
+    var larkFields = {
+      MCId: mcRec.id, Staff: mcRec.staff, Outlet: mcRec.outlet,
+      Date: mcRec.date, ShiftLabel: mcRec.shiftLabel, Notes: mcRec.notes,
+      Status: 'pending', SubmittedAt: mcRec.submittedAt
+    };
+    if (fileToken) larkFields.MCCert = [{ file_token: fileToken }];
+    var rid = await lCreate('MCRecords', larkFields);
+    mcRec.larkId = rid; saveAll();
+    ge('mcSubmitBtn').disabled = false; ge('mcSubmitBtn').textContent = 'Submit MC';
+    closeModal('mcModal'); renderTodayLog();
+    alert('MC submitted successfully! Pending admin review.');
+  }
+
+  // ── ADMIN ─────────────────────────────────────────────────────────
+  function showAdmin() {
+    showScreen('adminScreen');
+    var t = todayStr();
+    ge('fDateFrom').value = t; ge('fDateTo').value = t;
+    ge('fOtFrom').value = ''; ge('fOtTo').value = '';
+    populateFStaff();
+    var mcSel = ge('fMcStaff');
+    mcSel.innerHTML = '<option value="">All Staff</option>';
+    staff.filter(function(s){ return s.name!=='ADMIN'; }).forEach(function(s){
+      var o=document.createElement('option'); o.value=s.name; o.textContent=s.name; mcSel.appendChild(o);
+    });
+    adminTab('overview');
+  }
+
+  function adminTab(tab) {
+    var tabs = ['overview','records','ot','mc','staff','shifts'];
+    tabs.forEach(function(t) {
+      var el = ge('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+      if (el) el.style.display = (t===tab) ? '' : 'none';
+    });
+    document.querySelectorAll('.atab').forEach(function(el){
+      el.classList.toggle('active', el.dataset.tab===tab);
+    });
+    if (tab==='overview') renderOverview();
+    if (tab==='records')  renderRecords();
+    if (tab==='ot')       renderOT();
+    if (tab==='mc')       renderMC();
+    if (tab==='staff')    renderStaffList();
+    if (tab==='shifts')   renderShiftEditor();
+  }
+
+  async function renderOverview() {
+    ge('summaryCards').innerHTML = '<div class="empty-state" style="padding:12px;color:#718096">Loading from Lark…</div>';
+    ge('liveTable').innerHTML = '';
+    syncMsg('adminSyncStatus', '⟳ Loading…', '#a0aec0');
+    var attItems = await lList('Attendance');
+    var otItems  = await lList('OTRequests');
+    var mcItems  = await lList('MCRecords');
+    var t = todayStr();
+    var tr = attItems.filter(function(r){ return r.fields.Date === t; });
+    var inn  = tr.filter(function(r){ return !r.fields.ClockOut; }).length;
+    var out  = tr.filter(function(r){ return !!r.fields.ClockOut; }).length;
+    var flg  = tr.filter(function(r){ return r.fields.Flags && r.fields.Flags.trim(); }).length;
+    var pendOT = otItems.filter(function(o){ return o.fields.Status === 'pending'; }).length;
+    var pendMC = mcItems.filter(function(m){ return m.fields.Status === 'pending'; }).length;
+    ge('summaryCards').innerHTML =
+      '<div class="sc"><div class="val">'+inn+'</div><div class="lbl">🟢 Clocked In</div></div>'+
+      '<div class="sc"><div class="val">'+out+'</div><div class="lbl">🔴 Clocked Out</div></div>'+
+      '<div class="sc"><div class="val">'+flg+'</div><div class="lbl">⚠️ Flagged</div></div>'+
+      '<div class="sc"><div class="val">'+pendOT+'</div><div class="lbl">⏰ Pending OT</div></div>'+
+      '<div class="sc"><div class="val">'+pendMC+'</div><div class="lbl">🏥 Pending MC</div></div>';
+    if (!tr.length) { ge('liveTable').innerHTML='<div class="empty-state">No activity today.</div>'; syncMsg('adminSyncStatus','✓ Synced','#48bb78'); return; }
+    var rows = tr.map(function(r) {
+      var f = r.fields;
+      var st = f.ClockOut ? '🔴 Out' : '🟢 In';
+      var fl = f.Flags && f.Flags.trim() ? '<span class="flag-cell">⚠️ '+f.Flags+'</span>' : '—';
+      var otItem = f.OTId ? otItems.find(function(o){ return o.fields.OTId === f.OTId; }) : null;
+      var otInfo = otItem ? '<span class="ot-cell">⏰ '+otItem.fields.OTStart+'–'+otItem.fields.OTEnd+' ('+otItem.fields.Status+')</span>' : '—';
+      var wm = f.WorkMins ? fmins(Number(f.WorkMins)) : '—';
+      return '<tr><td><b>'+f.Staff+'</b></td><td>'+f.Outlet+'</td><td>'+f.ShiftLabel+'</td><td>'+st+'</td><td>'+ft(f.ClockIn)+'</td><td>'+(f.ClockOut?ft(f.ClockOut):'—')+'</td><td>'+wm+'</td><td>'+fl+'</td><td>'+otInfo+'</td></tr>';
+    }).join('');
+    ge('liveTable').innerHTML = '<table><thead><tr><th>Staff</th><th>Outlet</th><th>Shift</th><th>Status</th><th>In</th><th>Out</th><th>Work Hrs</th><th>Flags</th><th>OT</th></tr></thead><tbody>'+rows+'</tbody></table>';
+    syncMsg('adminSyncStatus', '✓ Synced', '#48bb78');
+  }
+
+  function populateFStaff() {
+    var sel = ge('fStaff');
+    sel.innerHTML = '<option value="">All Staff</option>';
+    staff.filter(function(s){ return s.name!=='ADMIN'; }).forEach(function(s){
+      var o=document.createElement('option'); o.value=s.name; o.textContent=s.name; sel.appendChild(o);
+    });
+  }
+
+  async function renderRecords() {
+    ge('recordsTable').innerHTML = '<div class="empty-state" style="padding:12px">Loading from Lark…</div>';
+    var fo=ge('fOutlet').value, fs=ge('fStaff').value, fd1=ge('fDateFrom').value, fd2=ge('fDateTo').value;
+    var attItems = await lList('Attendance');
+    var otItems  = await lList('OTRequests');
+    var f = attItems;
+    if (fo)  f = f.filter(function(r){ return r.fields.Outlet === fo; });
+    if (fs)  f = f.filter(function(r){ return r.fields.Staff === fs; });
+    if (fd1) f = f.filter(function(r){ return r.fields.Date >= fd1; });
+    if (fd2) f = f.filter(function(r){ return r.fields.Date <= fd2; });
+    f.sort(function(a,b){ return new Date(b.fields.ClockIn) - new Date(a.fields.ClockIn); });
+    if (!f.length) { ge('recordsTable').innerHTML='<div class="empty-state">No records found.</div>'; return; }
+    var rows = f.map(function(item) {
+      var r = item.fields;
+      var fl = r.Flags && r.Flags.trim() ? '<span class="flag-cell">⚠️ '+r.Flags+'</span>' : '—';
+      var otItem = r.OTId ? otItems.find(function(o){ return o.fields.OTId === r.OTId; }) : null;
+      var otInfo = otItem ? '<span class="ot-cell">'+otItem.fields.OTStart+'–'+otItem.fields.OTEnd+' '+fmins(Number(otItem.fields.OTMins))+' ('+otItem.fields.Status+')</span>' : '—';
+      var bm = r.BreakMins ? r.BreakMins + 'm' : '—';
+      var wm = r.WorkMins  ? fmins(Number(r.WorkMins)) : '—';
+      return '<tr><td>'+r.Date+'</td><td><b>'+r.Staff+'</b></td><td>'+r.Outlet+'</td><td>'+r.ShiftLabel+'</td><td>'+ft(r.ClockIn)+'</td><td>'+(r.ClockOut?ft(r.ClockOut):'—')+'</td><td>'+bm+'</td><td>'+wm+'</td><td>'+fl+'</td><td>'+otInfo+'</td></tr>';
+    }).join('');
+    ge('recordsTable').innerHTML = '<table><thead><tr><th>Date</th><th>Staff</th><th>Outlet</th><th>Shift</th><th>In</th><th>Out</th><th>Break</th><th>Work Hrs</th><th>Flags</th><th>OT</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  }
+
+  function exportCSV() {
+    var f = records.slice();
+    var fo=ge('fOutlet').value, fs=ge('fStaff').value, fd1=ge('fDateFrom').value, fd2=ge('fDateTo').value;
+    if (fo) f=f.filter(function(r){return r.outlet===fo;});
+    if (fs) f=f.filter(function(r){return r.staff===fs;});
+    if (fd1) f=f.filter(function(r){return r.date>=fd1;});
+    if (fd2) f=f.filter(function(r){return r.date<=fd2;});
+    var hdr='Date,Staff,Outlet,Shift,Clock In,Clock Out,Break Mins,Work Hours,OT Start,OT End,OT Mins,OT Status,Flags\n';
+    var rows=f.map(function(r){
+      var tb=r.breaks.reduce(function(a,b){return b.end?a+Math.round((new Date(b.end)-new Date(b.start))/60000):a;},0);
+      var ot=r.otId?findById(otRequests,r.otId):null;
+      return r.date+','+r.staff+','+r.outlet+',"'+(r.shiftLabel||'')+'",'+ft(r.clockIn)+','+(r.clockOut?ft(r.clockOut):'')+','+tb+','+(r.totalWorkMins!==null?fmins(r.totalWorkMins):'')+','+(ot?ot.otStart:'')+','+(ot?ot.otEnd:'')+','+(ot?ot.otMins:'')+','+(ot?ot.status:'')+','+(r.flags?r.flags.join('; '):'');
+    }).join('\n');
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));
+    a.download='attendance'+(fd1?'_'+fd1:'')+(fd2&&fd2!==fd1?'_to_'+fd2:'')+'.csv';
+    a.click();
+  }
+
+  async function renderOT() {
+    ge('otTable').innerHTML = '<div class="empty-state" style="padding:12px">Loading from Lark…</div>';
+    var items = await lList('OTRequests');
+    var fo=ge('fOtOutlet').value, fs=ge('fOtStatus').value, fd1=ge('fOtFrom').value, fd2=ge('fOtTo').value;
+    var f = items;
+    if (fo)  f = f.filter(function(o){ return o.fields.Outlet === fo; });
+    if (fs)  f = f.filter(function(o){ return o.fields.Status === fs; });
+    if (fd1) f = f.filter(function(o){ return o.fields.Date >= fd1; });
+    if (fd2) f = f.filter(function(o){ return o.fields.Date <= fd2; });
+    f.sort(function(a,b){ return new Date(b.fields.SubmittedAt) - new Date(a.fields.SubmittedAt); });
+    if (!f.length) { ge('otTable').innerHTML='<div class="empty-state">No OT requests found.</div>'; return; }
+    var rows = f.map(function(item) {
+      var o = item.fields, rid = item.record_id;
+      var sc = o.Status==='approved' ? 'color:#276749;font-weight:700' : o.Status==='rejected' ? 'color:#c53030;font-weight:700' : 'color:#744210;font-weight:700';
+      var btns = o.Status==='pending'
+        ? '<button onclick="window._approveOT(\''+rid+'\')" style="padding:4px 10px;background:#c6f6d5;color:#276749;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;margin-right:4px">Approve</button><button onclick="window._rejectOT(\''+rid+'\')" style="padding:4px 10px;background:#fed7d7;color:#c53030;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer">Reject</button>'
+        : '—';
+      return '<tr><td>'+(o.Date||'')+'</td><td><b>'+(o.Staff||'')+'</b></td><td>'+(o.Outlet||'')+'</td><td>'+(o.OTStart||'')+' – '+(o.OTEnd||'')+'</td><td>'+fmins(Number(o.OTMins||0))+'</td><td>'+(o.Reason||'')+'</td><td><span style="'+sc+'">'+(o.Status||'pending').toUpperCase()+'</span></td><td>'+btns+'</td></tr>';
+    }).join('');
+    ge('otTable').innerHTML = '<table><thead><tr><th>Date</th><th>Staff</th><th>Outlet</th><th>OT Time</th><th>Duration</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  }
+
+  window._approveOT = async function(larkRid) {
+    await lUpdate('OTRequests', larkRid, { Status: 'approved' });
+    var o = otRequests.find(function(x){ return x.larkId === larkRid; }); if (o) { o.status='approved'; saveAll(); }
+    renderOT(); renderOverview();
+  };
+  window._rejectOT = async function(larkRid) {
+    await lUpdate('OTRequests', larkRid, { Status: 'rejected' });
+    var o = otRequests.find(function(x){ return x.larkId === larkRid; }); if (o) { o.status='rejected'; saveAll(); }
+    renderOT(); renderOverview();
+  };
+
+  async function renderMC() {
+    ge('mcTable').innerHTML = '<div class="empty-state" style="padding:12px">Loading from Lark…</div>';
+    var items = await lList('MCRecords');
+    var fo=ge('fMcOutlet').value, fs=ge('fMcStaff').value, fst=ge('fMcStatus').value;
+    var fd1=ge('fMcFrom').value, fd2=ge('fMcTo').value;
+    var f = items;
+    if (fo)  f = f.filter(function(m){ return m.fields.Outlet === fo; });
+    if (fs)  f = f.filter(function(m){ return m.fields.Staff === fs; });
+    if (fst) f = f.filter(function(m){ return m.fields.Status === fst; });
+    if (fd1) f = f.filter(function(m){ return m.fields.Date >= fd1; });
+    if (fd2) f = f.filter(function(m){ return m.fields.Date <= fd2; });
+    f.sort(function(a,b){ return new Date(b.fields.SubmittedAt) - new Date(a.fields.SubmittedAt); });
+    if (!f.length) { ge('mcTable').innerHTML='<div class="empty-state">No MC records found.</div>'; return; }
+    var rows = f.map(function(item) {
+      var m = item.fields, rid = item.record_id;
+      var sc = m.Status==='approved' ? 'color:#276749;font-weight:700' : m.Status==='rejected' ? 'color:#c53030;font-weight:700' : 'color:#744210;font-weight:700';
+      var localMC = mcRecords.find(function(x){ return x.id === m.MCId; });
+      var fileToken = (m.MCCert && m.MCCert.length > 0) ? (m.MCCert[0].file_token || '') : '';
+      var hasFile = (localMC && localMC.fileData) || fileToken;
+      var safeId = (m.MCId||'').replace(/'/g,"\\'"), safeTok = fileToken.replace(/'/g,"\\'");
+      var viewBtn = hasFile ? '<button onclick="window._viewMC(\''+safeId+'\',\''+safeTok+'\')" style="padding:4px 10px;background:#e6fffa;color:#0987a0;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;margin-right:4px">View</button>' : '';
+      var actionBtns = m.Status==='pending'
+        ? viewBtn+'<button onclick="window._approveMC(\''+rid+'\',\''+m.MCId+'\')" style="padding:4px 10px;background:#c6f6d5;color:#276749;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;margin-right:4px">Approve</button><button onclick="window._rejectMC(\''+rid+'\',\''+m.MCId+'\')" style="padding:4px 10px;background:#fed7d7;color:#c53030;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer">Reject</button>'
+        : viewBtn;
+      return '<tr><td>'+(m.Date||'')+'</td><td><b>'+(m.Staff||'')+'</b></td><td>'+(m.Outlet||'')+'</td><td>'+(m.ShiftLabel||'')+'</td><td>'+(m.Notes||'')+'</td><td><span style="'+sc+'">'+(m.Status||'pending').toUpperCase()+'</span></td><td>'+actionBtns+'</td></tr>';
+    }).join('');
+    ge('mcTable').innerHTML = '<table><thead><tr><th>Date</th><th>Staff</th><th>Outlet</th><th>Shift</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  }
+
+  window._approveMC = async function(larkRid, mcId) {
+    await lUpdate('MCRecords', larkRid, { Status: 'approved' });
+    var m = mcRecords.find(function(x){ return x.id === mcId; }); if (m) { m.status='approved'; saveAll(); }
+    renderMC(); renderOverview();
+  };
+  window._rejectMC = async function(larkRid, mcId) {
+    await lUpdate('MCRecords', larkRid, { Status: 'rejected' });
+    var m = mcRecords.find(function(x){ return x.id === mcId; }); if (m) { m.status='rejected'; saveAll(); }
+    renderMC(); renderOverview();
+  };
+  window._viewMC = async function(mcId, fileToken) {
+    var m = mcRecords.find(function(x){ return x.id === mcId; });
+    if (m && m.fileData) {
+      var win = window.open('','_blank');
+      if (m.fileData.startsWith('data:image')) {
+        win.document.write('<html><body style="margin:0;background:#000"><img src="'+m.fileData+'" style="max-width:100%;display:block;margin:auto"></body></html>');
+      } else {
+        win.document.write('<html><body style="margin:0"><embed src="'+m.fileData+'" width="100%" height="100%" type="application/pdf"></body></html>');
+      }
+      return;
+    }
+    if (fileToken) {
+      try {
+        var tok = await getToken();
+        var resp = await fetch(LARK.api + '/drive/v1/medias/' + fileToken + '/download', {
+          headers: { 'Authorization': 'Bearer ' + tok }
+        });
+        var blob = await resp.blob();
+        var blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+      } catch(e) { alert('Could not load the certificate. Please view it directly in Lark Base.'); }
+      return;
+    }
+    alert('No file available.');
+  };
+
+  async function renderStaffList() {
+    ge('staffList').innerHTML = '<div style="color:#a0aec0;font-size:13px;padding:10px">Loading…</div>';
+    var larkStaff = await fetchStaffFromLark();
+    if (larkStaff && larkStaff.length > 0) { staff = larkStaff; lsSet('mp_staff', staff); }
+    else { staff = lsGet('mp_staff', null) || defaultStaff(); }
+    var nonAdmin = staff.filter(function(s){ return s.name!=='ADMIN'; });
+    ge('staffList').innerHTML = nonAdmin.map(function(s){
+      var u = s.user.replace(/'/g,"\\'");
+      return '<div class="staff-row"><div class="sinfo"><span class="sname">'+s.name+'</span><span class="soutlet">@'+s.user+' · '+(s.outlet||'—')+'</span></div><div><button class="btn-edit" onclick="window._openEdit(\''+u+'\')">Edit</button><button class="btn-del" onclick="window._delStaff(\''+u+'\')">✕</button></div></div>';
+    }).join('') || '<div style="color:#a0aec0;font-size:13px;padding:10px">No staff found.</div>';
+  }
+
+  window._openEdit = function(username) {
+    editIsNew = false;
+    editUsername = username;
+    staff = lsGet('mp_staff', null) || defaultStaff();
+    var s = staff.find(function(x){ return x.user === username; });
+    if (!s) { alert('Staff not found.'); return; }
+    ge('editModalTitle').textContent = 'Edit Staff';
+    ge('eName').value = s.name;
+    ge('eUser').value = s.user;
+    ge('ePass').value = '';
+    ge('eOutlet').value = s.outlet || 'Gala City';
+    ge('editModal').classList.add('open');
+  };
+  window._delStaff = async function(username) {
+    staff = lsGet('mp_staff', null) || defaultStaff();
+    var s = staff.find(function(x){ return x.user === username; });
+    if (!s || !confirm('Remove ' + s.name + '?')) return;
+    if (s.larkId) await lDelete('Staff', s.larkId);
+    staff = staff.filter(function(x){ return x.user !== username; });
+    saveAll(); renderStaffList();
+  };
+
+  function openAddStaff() {
+    editIdx=null; editIsNew=true;
+    ge('editModalTitle').textContent='Add Staff';
+    ge('eName').value=''; ge('eUser').value=''; ge('ePass').value=''; ge('eOutlet').value='Gala City';
+    ge('editModal').classList.add('open');
+  }
+
+  async function saveEdit() {
+    var nm=ge('eName').value.trim(), us=ge('eUser').value.trim(), ps=ge('ePass').value, ot=ge('eOutlet').value;
+    if (!nm||!us) { alert('Name and username required.'); return; }
+    ge('editSaveBtn').disabled=true; ge('editSaveBtn').textContent='Saving…';
+    if (editIsNew) {
+      var newS = {name:nm, user:us, pass:ps||'pass123', outlet:ot, larkId:null};
+      var rid = await lCreate('Staff', {Name:nm, Username:us, Password:ps||'pass123', Outlet:ot});
+      newS.larkId = rid;
+      staff = lsGet('mp_staff', null) || defaultStaff();
+      staff.push(newS);
+    } else {
+      staff = lsGet('mp_staff', null) || defaultStaff();
+      var s = staff.find(function(x){ return x.user === editUsername; });
+      if (!s) { alert('Staff not found — please try again.'); ge('editSaveBtn').disabled=false; ge('editSaveBtn').textContent='Save'; return; }
+      s.name=nm; s.user=us; if(ps) s.pass=ps; s.outlet=ot;
+      var fields = {Name:nm, Username:us, Outlet:ot}; if(ps) fields.Password=ps;
+      if (s.larkId) await lUpdate('Staff', s.larkId, fields);
+    }
+    saveAll(); ge('editSaveBtn').disabled=false; ge('editSaveBtn').textContent='Save';
+    closeModal('editModal'); renderStaffList(); populateFStaff();
+  }
+
+  window._clearAllShifts = async function() {
+    if (!confirm('Remove ALL shifts for ' + currentShiftOutlet + '?')) return;
+    var list = shifts[currentShiftOutlet] || [];
+    for (var i=0; i<list.length; i++) { if (list[i].larkId) await lDelete('Shifts', list[i].larkId); }
+    shifts[currentShiftOutlet] = [];
+    saveAll(); renderShiftEditor();
+  };
+  window._delShift = async function(outlet, sid) {
+    if (!confirm('Remove this shift?')) return;
+    if (!shifts[outlet]) return;
+    var sh = shifts[outlet].find(function(s){ return s.id===sid; });
+    if (sh && sh.larkId) await lDelete('Shifts', sh.larkId);
+    shifts[outlet] = shifts[outlet].filter(function(s){ return s.id !== sid; });
+    saveAll(); renderShiftEditor();
+  };
+
+  async function renderShiftEditor() {
+    ge('shiftList').innerHTML = '<div style="color:#a0aec0;font-size:13px;padding:8px 0">Loading…</div>';
+    var larkShifts = await fetchShiftsFromLark();
+    if (larkShifts) { shifts = larkShifts; lsSet('mp_shifts', shifts); }
+    var list = shifts[currentShiftOutlet] || [];
+    if (!list.length) { ge('shiftList').innerHTML='<div style="color:#a0aec0;font-size:13px;padding:8px 0">No shifts yet.</div>'; return; }
+    var html = '';
+    for (var i=0; i<list.length; i++) {
+      var sh = list[i];
+      var safeOutlet = currentShiftOutlet.replace(/'/g,"\\'");
+      var safeId = sh.id.replace(/'/g,"\\'");
+      html += '<div class="shift-item"><span class="slabel">'+sh.label+'</span><span class="stime">'+sh.start+' – '+sh.end+'</span><button class="btn-del-shift" onclick="window._delShift(\''+safeOutlet+'\',\''+safeId+'\')">Remove</button></div>';
+    }
+    ge('shiftList').innerHTML = html;
+  }
+
+  async function addShift() {
+    var label=ge('newShiftLabel').value.trim(), start=ge('newShiftStart').value, end=ge('newShiftEnd').value;
+    if (!label||!start||!end) { alert('Please fill in shift name, start and end time.'); return; }
+    ge('addShiftBtn').disabled=true; ge('addShiftBtn').textContent='Saving…';
+    var sid = 's'+Date.now();
+    var newShift = {id:sid, label:label, start:start, end:end, larkId:null};
+    if (!shifts[currentShiftOutlet]) shifts[currentShiftOutlet]=[];
+    shifts[currentShiftOutlet].push(newShift);
+    saveAll();
+    var rid = await lCreate('Shifts', {ShiftId:sid, Outlet:currentShiftOutlet, Label:label, Start:start, End:end});
+    newShift.larkId = rid; saveAll();
+    ge('addShiftBtn').disabled=false; ge('addShiftBtn').textContent='+ Add Shift';
+    ge('newShiftLabel').value=''; ge('newShiftStart').value=''; ge('newShiftEnd').value='';
+    renderShiftEditor();
+  }
+
+  function closeModal(id) { ge(id).classList.remove('open'); }
+
+  // ── UTILS ─────────────────────────────────────────────────────────
+  function ge(id) { return document.getElementById(id); }
+  function showScreen(id) { document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); ge(id).classList.add('active'); }
+  function getAllShifts() { var a=[]; Object.values(shifts).forEach(function(v){a=a.concat(v);}); return a; }
+  function findById(arr, id) { for(var i=0;i<arr.length;i++){if(arr[i].id===id)return arr[i];} return null; }
+  function ft(iso) { if(!iso)return'—'; return new Date(iso).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit',hour12:true}); }
+  function fmins(m) { if(m===null||m===undefined||isNaN(m))return'—'; return Math.floor(m/60)+'h '+m%60+'m'; }
+
+  // ── EVENT LISTENERS ───────────────────────────────────────────────
+  ge('loginBtn').addEventListener('click', doLogin);
+  ge('loginPass').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+  ge('adminLink').addEventListener('click', function(){ ge('loginUser').value='admin'; ge('loginPass').focus(); });
+
+  ge('resetStaffOnlyBtn').addEventListener('click', function(){
+    if (!confirm('Reset all staff passwords back to "pass123"? This will NOT delete any attendance records.')) return;
+    staff = defaultStaff(); lsSet('mp_staff', staff); renderStaffList();
+    alert('✅ Staff passwords reset to pass123. Records are untouched.');
+  });
+  ge('resetAllBtn').addEventListener('click', function(){
+    if (!confirm('WARNING: This will permanently delete ALL attendance records, OT requests and MC records. Are you absolutely sure?')) return;
+    if (!confirm('Last chance — this cannot be undone. Delete everything?')) return;
+    localStorage.removeItem('mp_staff'); localStorage.removeItem('mp_shifts');
+    localStorage.removeItem('mp_records'); localStorage.removeItem('mp_ot'); localStorage.removeItem('mp_mc');
+    staff=defaultStaff(); shifts=defaultShifts(); records=[]; otRequests=[]; mcRecords=[];
+    saveAll(); alert('✅ All data reset to defaults.');
+    renderOverview(); renderStaffList();
+  });
+
+  ge('staffLogoutBtn').addEventListener('click', logout);
+  ge('adminLogoutBtn').addEventListener('click', logout);
+  ge('outletSelect').addEventListener('change', function(){ populateShifts(this.value); checkGPSForOutlet(); });
+  ge('btnCI').addEventListener('click', clockIn);
+  ge('btnCO').addEventListener('click', clockOut);
+  ge('btnBI').addEventListener('click', breakStart);
+  ge('btnBO').addEventListener('click', breakEnd);
+  ge('btnOT').addEventListener('click', openOTModal);
+  ge('exportBtn').addEventListener('click', exportCSV);
+  ge('addStaffBtn').addEventListener('click', openAddStaff);
+  ge('addShiftBtn').addEventListener('click', addShift);
+  ge('editSaveBtn').addEventListener('click', saveEdit);
+  ge('editCancelBtn').addEventListener('click', function(){ closeModal('editModal'); });
+  ge('otSubmitBtn').addEventListener('click', submitOT);
+  ge('otCancelBtn').addEventListener('click', function(){ closeModal('otModal'); });
+
+  document.querySelectorAll('.atab[data-tab]').forEach(function(el){
+    el.addEventListener('click', function(){ adminTab(this.dataset.tab); });
+  });
+  document.querySelectorAll('.otab[data-outlet]').forEach(function(el){
+    el.addEventListener('click', function(){
+      currentShiftOutlet = this.dataset.outlet;
+      document.querySelectorAll('.otab[data-outlet]').forEach(function(t){ t.classList.remove('active'); });
+      this.classList.add('active');
+      renderShiftEditor();
+    });
+  });
+
+  ge('fOutlet').addEventListener('change', renderRecords);
+  ge('fStaff').addEventListener('change', renderRecords);
+  ge('fDateFrom').addEventListener('change', renderRecords);
+  ge('fDateTo').addEventListener('change', renderRecords);
+  ge('fOtOutlet').addEventListener('change', renderOT);
+  ge('fOtStatus').addEventListener('change', renderOT);
+  ge('fOtFrom').addEventListener('change', renderOT);
+  ge('fOtTo').addEventListener('change', renderOT);
+
+  ge('btnMC').addEventListener('click', openMCModal);
+  ge('mcCancelBtn').addEventListener('click', function(){ closeModal('mcModal'); });
+  ge('mcSubmitBtn').addEventListener('click', submitMC);
+  ge('mcOutletSelect').addEventListener('change', function(){ populateMCShifts(this.value); });
+  ge('mcUploadBox').addEventListener('click', function(){ ge('mcFileInput').click(); });
+  ge('mcFileInput').addEventListener('change', function() {
+    var file = this.files[0]; if (!file) return;
+    mcFile = file;
+    ge('mcFileName').textContent = file.name;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      mcFileData = e.target.result;
+      if (file.type.startsWith('image/')) { ge('mcPreview').src=mcFileData; ge('mcPreview').style.display='block'; }
+      else { ge('mcPreview').style.display='none'; }
+    };
+    reader.readAsDataURL(file);
+  });
+  ge('fMcOutlet').addEventListener('change', renderMC);
+  ge('fMcStaff').addEventListener('change', renderMC);
+  ge('fMcStatus').addEventListener('change', renderMC);
+  ge('fMcFrom').addEventListener('change', renderMC);
+  ge('fMcTo').addEventListener('change', renderMC);
+
+})();
+</script>
+</body>
+</html>
